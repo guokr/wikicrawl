@@ -42,7 +42,6 @@
             (category? page)
                 (when (>= depth 0)
                     (println (str ".. " curpath))
-                    (.mkdir curpath)
                     (let [subcats (query-subcat :en page)
                           articles (query-article :en page)]
                       (doseq [article articles]
@@ -55,12 +54,14 @@
                               (traverse-tree subcat curpath (dec depth)))))))
             (not (specials? page))
                 (when (zero? (.length curpath))
-                    (if (not (.exists curpath))
-                        (with-open [newfile (java.io.FileWriter. curpath)]
-                            (println (str "-> " curpath))
-                            (if-let [text (gen-content page)]
-                              (.write newfile text)))
-                        (println (str "-- " curpath)))))))
+                    (do
+                      (clojure.java.io/make-parents curpath)
+                      (if (not (.exists curpath))
+                          (with-open [newfile (java.io.FileWriter. curpath)]
+                              (println (str "-> " curpath))
+                              (if-let [text (gen-content page)]
+                                (.write newfile text)))
+                          (println (str "-- " curpath))))))))
 
 (defn -main []
   (doseq [root-cat (:en root-categories)]
