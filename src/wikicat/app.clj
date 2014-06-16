@@ -46,7 +46,7 @@
                     (let [subcats (query-subcat :en page)
                           articles (query-article :en page)]
                       (doseq [article articles]
-                          (traverse-tree article curpath depth))
+                          (traverse-tree article curpath (dec depth)))
                       (doseq [subcat subcats]
                         (let [false-cats?
                                 (or (empty? articles) (re-find #" by " subcat))]

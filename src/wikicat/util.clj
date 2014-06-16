@@ -1,7 +1,9 @@
 (ns wikicat.util
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
-            [clj-yaml.core :as yaml]))
+            [me.shenfeng.mustache :as mustache]))
+
+(mustache/deftemplate tmpl-fn (slurp "templates/article.tpl"))
 
 (defn category? [page] (.startsWith page "Category:"))
 (defn specials? [page] (.contains page ":"))
@@ -33,34 +35,40 @@
 
 (defn query-langlinks [lang pagename]
   (Thread/sleep 100)
-  (first (map #(get-in (second %) [:langlinks])
+  (:langlinks (first (vals
     (get-in
-      (println
-        (parse-string (get
+        (parse-string (:body
           (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
-              "action=query&format=json&list=langlinks&"
-              "titles=" pagename)) :body) true))
-        [:query :pages]))))
+              "action=query&format=json&prop=langlinks&"
+              "titles=" pagename))) true)
+        [:query :pages])))))
 
 (defn query-categories [lang pagename]
   (Thread/sleep 100)
-  (first (map #(get-in (second %) [:categories :title])
-    (get-in (parse-string (:body
+  (map #(get % :title)
+    (:categories (first (vals (get-in (parse-string (:body
           (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
               "action=query&format=json&prop=categories&clshow=!hidden&"
-              "titles=" pagename))))) [:query :pages])))
+              "titles=" pagename))) true) [:query :pages]))))))
 
 (defn mk-langlinks [page]
-  (apply hash-map (flatten
-    (for [item (query-langlinks :en page)] [(.getKey item) (.getValue item)]))))
+  (apply merge (into [{:lang :en :name page}]
+                     (map #(hash-map :lang (:lang %) :name (:* %))
+                          (query-langlinks :en page)))))
 
 (defn mk-categories [lang page]
-  (map #(.replace % "Category:" "") (query-categories lang page)))
+  (apply #(sorted-set-by (fn [x y] (< (first x) (first y))) %)
+    (map #({:name %})
+      (map #(.substring % (inc (.lastIndexOf % ":")))
+        (query-categories lang page)))))
 
 (defn gen-content [page]
   (let [langlinks (mk-langlinks page)
-        categories (map #(mk-categories (first %) (second %)) langlinks)]
-    (yaml/generate-string {:names langlinks :categories categories})))
+        allcategories (apply merge
+                          (map #(hash-map :lang (first %) :categories
+                                          (mk-categories (:lang %) (:name %)))
+                               langlinks))]
+    (tmpl-fn {:names langlinks :allcategories allcategories})))
 
 
 
