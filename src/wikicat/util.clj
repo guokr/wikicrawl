@@ -3,17 +3,35 @@
             [cheshire.core :refer :all]
             [me.shenfeng.mustache :as mustache]))
 
+; please check with ns id = 14 at the page
+; https://{{lang}}.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces
+(def category-ns-of {
+        :en "Category"
+        :de "Kategorie"
+        :es "Categoría"
+        :fr "Catégorie"
+        :zh "Category"})
+
 (mustache/deftemplate tmpl-fn (slurp "templates/article.tpl"))
 
-(defn category? [page] (.startsWith page "Category:"))
-(defn specials? [page] (.contains page ":"))
+(defn category? [lang page]
+  (.startsWith page (str (lang category-ns-of) ":")))
 
-(defn to-file-name [page]
-  (str (.. page
-    (replace "Category:" "")
-    (replace " " "_")
-    (replace "(" "[")
-    (replace ")" "]")) (if (category? page) "" ".yaml")))
+(defn specials? [page]
+  (.contains page ":"))
+
+(defn to-name [page]
+  (.substring page (inc (.lastIndexOf page ":"))))
+
+(defn to-file-name [lang page]
+  (str
+    (.. (to-name page)
+        (replace "'" "_")
+        (replace "," "_")
+        (replace " " "_")
+        (replace "(" "[")
+        (replace ")" "]"))
+    (if (category? lang page) "" ".yaml")))
 
 (defn query-subcat [lang pagename]
   (map #(get % :title)
@@ -51,27 +69,21 @@
               "action=query&format=json&prop=categories&clshow=!hidden&"
               "titles=" pagename))) true) [:query :pages]))))))
 
-(defn mk-langlinks [page]
+(defn mk-langlinks [lang page]
   (sort-by #(:lang %)
-           (into [{:lang (name :en) :name page}]
-                 (clojure.set/rename (query-langlinks :en page) {:* :name}))))
+           (into [{:lang (name lang) :name page}]
+                 (clojure.set/rename (query-langlinks lang page) {:* :name}))))
 
 (defn mk-categories [lang page]
   (sort-by last
     (map #(hash-map :name %)
-      (map #(.substring % (inc (.lastIndexOf % ":")))
-        (query-categories lang page))))
-  )
+      (map to-name
+        (query-categories lang page)))))
 
-(defn gen-content [page tree]
+(defn gen-content [lang page tree]
   (let [treepath (map #(hash-map :name %) tree)
-        langlinks (mk-langlinks page)
+        langlinks (mk-langlinks lang page)
         allcategories (map #(hash-map :lang (:lang %) :categories
                                       (mk-categories (:lang %) (:name %)))
                            langlinks)]
     (tmpl-fn {:treepath treepath :names langlinks :allcategories allcategories})))
-
-
-
-
-
