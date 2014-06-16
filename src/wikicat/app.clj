@@ -40,13 +40,13 @@
           curpath (java.io.File. path filename)]
         (cond
             (category? page)
-                (when-not (zero? depth)
+                (when (>= depth 0)
                     (println (str ".. " curpath))
                     (.mkdir curpath)
                     (let [subcats (query-subcat :en page)
                           articles (query-article :en page)]
                       (doseq [article articles]
-                          (traverse-tree article curpath (dec depth)))
+                          (traverse-tree article curpath depth))
                       (doseq [subcat subcats]
                         (let [false-cats?
                                 (or (empty? articles) (re-find #" by " subcat))]
@@ -67,5 +67,5 @@
     (let [root-page (str "Category:" root-cat)]
       (.start (Thread. (fn []
         (swap! counter inc)
-        (traverse-tree root-page root-path 4)
+        (traverse-tree root-page root-path max-depth)
         (swap! counter dec)))))))

@@ -54,9 +54,7 @@
 (defn mk-langlinks [page]
   (sort-by #(:lang %)
            (into [{:lang (name :en) :name page}]
-                 ;(map #(clojure.set/rename % {:* :name})
-                 (map #(hash-map :lang (:lang %) :name (:* %))
-                      (query-langlinks :en page)))))
+                 (clojure.set/rename (query-langlinks :en page) {:* :name}))))
 
 (defn mk-categories [lang page]
   (sort-by last
