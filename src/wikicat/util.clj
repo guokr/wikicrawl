@@ -52,22 +52,24 @@
               "titles=" pagename))) true) [:query :pages]))))))
 
 (defn mk-langlinks [page]
-  (apply merge (into [{:lang :en :name page}]
-                     (map #(hash-map :lang (:lang %) :name (:* %))
-                          (query-langlinks :en page)))))
+  (sort-by #(:lang %)
+           (into [{:lang (name :en) :name page}]
+                 ;(map #(clojure.set/rename % {:* :name})
+                 (map #(hash-map :lang (:lang %) :name (:* %))
+                      (query-langlinks :en page)))))
 
 (defn mk-categories [lang page]
-  (apply #(sorted-set-by (fn [x y] (< (first x) (first y))) %)
-    (map #({:name %})
+  (sort-by last
+    (map #(hash-map :name %)
       (map #(.substring % (inc (.lastIndexOf % ":")))
-        (query-categories lang page)))))
+        (query-categories lang page))))
+  )
 
 (defn gen-content [page]
   (let [langlinks (mk-langlinks page)
-        allcategories (apply merge
-                          (map #(hash-map :lang (first %) :categories
-                                          (mk-categories (:lang %) (:name %)))
-                               langlinks))]
+        allcategories (map #(hash-map :lang (:lang %) :categories
+                                      (mk-categories (:lang %) (:name %)))
+                           langlinks)]
     (tmpl-fn {:names langlinks :allcategories allcategories})))
 
 
