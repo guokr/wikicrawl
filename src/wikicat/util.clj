@@ -23,6 +23,9 @@
 (defn to-name [page]
   (.substring page (inc (.lastIndexOf page ":"))))
 
+(defn to-category [lang page]
+  (str (lang category-ns-of) ":" page))
+
 (defn to-file-name [lang page]
   (str
     (.. (to-name page)

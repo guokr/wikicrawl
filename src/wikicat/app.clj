@@ -94,7 +94,7 @@
 (defn crawl-wiki [lang]
   (let [lang-root-path (java.io.File. root-path (name lang))]
     (doseq [root-cat (lang root-categories)]
-      (let [root-page (str "Category:" root-cat)]
+      (let [root-page (to-category lang root-cat)]
         (.start (Thread. (fn []
           (swap! counter inc)
           (traverse-tree lang root-page [] lang-root-path max-depth)
