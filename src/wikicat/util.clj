@@ -63,12 +63,13 @@
         (query-categories lang page))))
   )
 
-(defn gen-content [page]
-  (let [langlinks (mk-langlinks page)
+(defn gen-content [page tree]
+  (let [treepath (map #(hash-map :name %) tree)
+        langlinks (mk-langlinks page)
         allcategories (map #(hash-map :lang (:lang %) :categories
                                       (mk-categories (:lang %) (:name %)))
                            langlinks)]
-    (tmpl-fn {:names langlinks :allcategories allcategories})))
+    (tmpl-fn {:treepath treepath :names langlinks :allcategories allcategories})))
 
 
 

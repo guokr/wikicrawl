@@ -34,10 +34,11 @@
          ;technology-and-applied-sciences
          "Applied sciences" "Technology"]})
 
-(defn traverse-tree [page path depth]
+(defn traverse-tree [page tree path depth]
     (Thread/sleep (* (+ 200 (rand-int 200)) @counter))
     (let [filename (to-file-name page)
-          curpath (java.io.File. path filename)]
+          curpath (java.io.File. path filename)
+          newtree (conj tree (.substring page (inc (.lastIndexOf page ":"))))]
         (cond
             (category? page)
                 (when (>= depth 0)
@@ -45,13 +46,13 @@
                     (let [subcats (query-subcat :en page)
                           articles (query-article :en page)]
                       (doseq [article articles]
-                          (traverse-tree article curpath depth))
+                          (traverse-tree article newtree curpath depth))
                       (doseq [subcat subcats]
                         (let [false-cats?
                                 (or (empty? articles) (re-find #" by " subcat))]
                           (if false-cats?
-                              (traverse-tree subcat curpath depth)
-                              (traverse-tree subcat curpath (dec depth)))))))
+                              (traverse-tree subcat newtree curpath depth)
+                              (traverse-tree subcat newtree curpath (dec depth)))))))
             (not (specials? page))
                 (when (zero? (.length curpath))
                     (do
@@ -59,7 +60,7 @@
                       (if (not (.exists curpath))
                           (with-open [newfile (java.io.FileWriter. curpath)]
                               (println (str "-> " curpath))
-                              (if-let [text (gen-content page)]
+                              (if-let [text (gen-content page tree)]
                                 (.write newfile text)))
                           (println (str "-- " curpath))))))))
 
@@ -68,5 +69,5 @@
     (let [root-page (str "Category:" root-cat)]
       (.start (Thread. (fn []
         (swap! counter inc)
-        (traverse-tree root-page root-path max-depth)
+        (traverse-tree root-page [] root-path max-depth)
         (swap! counter dec)))))))

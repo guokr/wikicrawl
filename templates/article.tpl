@@ -1,3 +1,6 @@
+CategoryPath:{{# treepath }}
+  - {{ name }}{{/ treepath }}
+
 Names:{{# names }}
   - {{ lang }}: {{ name }}{{/ names }}
 
