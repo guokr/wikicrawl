@@ -11,7 +11,9 @@
 
 (defn crawl-dir [lang dir]
   (for [file (.listFiles dir)]
-    (if (.isFile file) (crawl-file lang file) (crawl-dir lang file))))
+    (if (.isFile file)
+      (if (.endsWith (.getName file) ".yaml") (crawl-file lang file))
+      (crawl-dir lang file))))
 
 (defn crawl-text [lang]
   (let [lang-root-path (java.io.File. root-path (name lang))]

@@ -2,7 +2,8 @@
   (:use wikicrawl.config)
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
-            [me.shenfeng.mustache :as mustache]))
+            [me.shenfeng.mustache :as mustache]
+            [net.cgrand.enlive-html :as html]))
 
 (defn xml-unescape [escape-str]
   (if (and escape-str (.startsWith escape-str "&"))
@@ -90,7 +91,7 @@
   (first (vals
     (get-in
       (parse-string (:body (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?action=parse&uselang=" (lang lang-variant) "&redirects&disablepp&prop=text&format=json&page=" pagename))))
-      [:parse :text]))))
+      ["parse" "text"]))))
 
 (defn mk-langlinks [lang page]
   (sort-by #(:lang %)
@@ -112,7 +113,14 @@
     (tmpl-fn {:treepath treepath :names langlinks :allcategories allcategories})))
 
 (defn mk-page [lang pagename]
-  (query-page lang pagename))
+  (-> (query-page lang pagename)
+      (clojure.string/replace #"\n" "")
+      java.io.StringReader.
+      html/html-resource
+      (html/at #{[:.metadata] [:.notice] [:.toc] [:.references] [:.printfooter]
+                 [:.noprint]} (fn [x] nil))
+      html/texts
+      first))
 
 (defn gen-page [lang pagename]
   (mk-page lang pagename))
