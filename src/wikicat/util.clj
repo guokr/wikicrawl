@@ -3,6 +3,19 @@
             [cheshire.core :refer :all]
             [me.shenfeng.mustache :as mustache]))
 
+(defn xml-unescape [escape-str]
+  (if (and escape-str (.startsWith escape-str "&"))
+    (cond
+      (= escape-str "&amp;") "&"
+      (= escape-str "&gt;") ">"
+      (= escape-str "&lt;") "<"
+      (= escape-str "&quot;") "\""
+      (= escape-str "&apos;") "'"
+      (re-matches #"\&\#\d+;" escape-str)
+        (String/valueOf (char (Integer/parseInt (second (re-matches #"\&\#(\d+);" escape-str)))))
+      true (throw (RuntimeException. (str "Unknown xml escape sequence: " escape-str))))
+    escape-str))
+
 ; please check with ns id = 14 at the page
 ; https://{{lang}}.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces
 (def category-ns-of {
@@ -48,29 +61,32 @@
 (defn query-article [lang pagename]
   (map #(get % :title)
     (get-in
-      (parse-string (get
+      (parse-string
+        (xml-unescape (:body
           (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
               "action=query&format=json&list=categorymembers&cmtype=page&cmnamespace=0&redirects&"
-              "cmtitle=" pagename)) :body) true)
+              "cmtitle=" pagename)))) true)
       [:query :categorymembers])))
 
 (defn query-langlinks [lang pagename]
   (Thread/sleep 100)
   (:langlinks (first (vals
     (get-in
-        (parse-string (:body
-          (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
+        (parse-string
+          (xml-unescape (:body
+            (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
               "action=query&format=json&prop=langlinks&"
-              "titles=" pagename))) true)
+              "titles=" pagename)))) true)
         [:query :pages])))))
 
 (defn query-categories [lang pagename]
-  (Thread/sleep 100)
+  (Thread/sleep 200)
   (map #(get % :title)
-    (:categories (first (vals (get-in (parse-string (:body
+    (:categories (first (vals (get-in (parse-string
+       (xml-unescape (:body
           (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
               "action=query&format=json&prop=categories&clshow=!hidden&"
-              "titles=" pagename))) true) [:query :pages]))))))
+              "titles=" pagename)))) true) [:query :pages]))))))
 
 (defn mk-langlinks [lang page]
   (sort-by #(:lang %)
