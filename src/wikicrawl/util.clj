@@ -1,16 +1,12 @@
-(ns wikicat.util
+(ns wikicrawl.util
+  (:use wikicrawl.config)
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [me.shenfeng.mustache :as mustache]))
 
 ; please check with ns id = 14 at the page
 ; https://{{lang}}.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces
-(def category-ns-of {
-        :en "Category"
-        :de "Kategorie"
-        :es "Categoría"
-        :fr "Catégorie"
-        :zh "Category"})
+(def counter (atom 0))
 
 (mustache/deftemplate tmpl-fn (slurp "templates/article.tpl"))
 
@@ -72,6 +68,14 @@
               "action=query&format=json&prop=categories&clshow=!hidden&"
               "titles=" pagename))) true) [:query :pages]))))))
 
+
+(defn query-page [lang pagename]
+  (Thread/sleep 100)
+  (first (vals
+    (get-in
+      (parse-string (:body (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?action=parse&uselang=" (lang lang-variant) "&redirects&disablepp&prop=text&format=json&page=" pagename))))
+      [:parse :text]))))
+
 (defn mk-langlinks [lang page]
   (sort-by #(:lang %)
            (into [{:lang (name lang) :name page}]
@@ -90,3 +94,9 @@
                                       (mk-categories (:lang %) (:name %)))
                            langlinks)]
     (tmpl-fn {:treepath treepath :names langlinks :allcategories allcategories})))
+
+(defn mk-page [lang pagename]
+  (query-page lang pagename))
+
+(defn gen-page [lang pagename]
+  (mk-page lang pagename))
