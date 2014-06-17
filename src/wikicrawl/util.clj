@@ -112,15 +112,13 @@
                            langlinks)]
     (tmpl-fn {:treepath treepath :names langlinks :allcategories allcategories})))
 
-(defn mk-page [lang pagename]
+(defn gen-page [lang pagename]
   (-> (query-page lang pagename)
       (clojure.string/replace #"\n" "")
       java.io.StringReader.
       html/html-resource
-      (html/at #{[:.metadata] [:.notice] [:.toc] [:.references] [:.printfooter]
-                 [:.noprint]} (fn [x] nil))
+      (html/at #{[:.metadata] [:.notice] [:.toc] [:.reflist] [:.printfooter]
+                 [:.noprint] [:.infobox] [:.navbox] [:.reference]
+                 [:.references] [:.mw-editsection]} (fn [x] nil))
       html/texts
       first))
-
-(defn gen-page [lang pagename]
-  (mk-page lang pagename))

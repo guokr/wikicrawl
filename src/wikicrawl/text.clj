@@ -5,8 +5,13 @@
 
 (defn crawl-file [lang file]
   (try
-    (let [pagename (lang (:name (yaml/parse-string (slurp file))))]
-      (gen-page lang pagename))
+    (let [pagename (lang (:name (yaml/parse-string (slurp file))))
+          path (.getPath file)
+          newname (str (.subString path 0 (inc (.lastIndexOf path ".")))
+                       "txt")]
+      (with-open [newfile (java.io.FileWriter. newname)]
+          (if-let [text (gen-page lang pagename)]
+            (.write newfile text))))
     (catch Throwable e (println e))))
 
 (defn crawl-dir [lang dir]
