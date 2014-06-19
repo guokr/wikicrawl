@@ -5,6 +5,11 @@
             [me.shenfeng.mustache :as mustache]
             [net.cgrand.enlive-html :as html]))
 
+(def counter (atom 0))
+
+(defn valid? [lang pagename]
+  (every? nil? (map #(re-find % pagename) (lang blacklist))))
+
 (defn xml-unescape [escape-str]
   (if (and escape-str (.startsWith escape-str "&"))
     (cond
@@ -20,8 +25,6 @@
 
 ; please check with ns id = 14 at the page
 ; https://{{lang}}.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces
-(def counter (atom 0))
-
 (mustache/deftemplate tmpl-fn (slurp "templates/article.tpl"))
 
 (defn category? [lang page]

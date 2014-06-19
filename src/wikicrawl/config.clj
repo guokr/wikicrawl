@@ -7,11 +7,15 @@
 (def langs [:en :de :es :fr :zh])
 
 (def category-ns-of {
-        :en "Category"
-        :de "Kategorie"
-        :es "Categoría"
-        :fr "Catégorie"
-        :zh "Category"})
+  :en "Category"
+  :de "Kategorie"
+  :es "Categoría"
+  :fr "Catégorie"
+  :zh "Category"})
+
+(def blacklist {
+  :en [#"^Template" #"partals?$"]
+  :zh [#"(模版|消歧義|消歧义|重定向)$"]})
 
 (def lang-variant {:zh "zh-cn" :en "en"})
 
