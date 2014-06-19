@@ -31,11 +31,12 @@
       (not (specials? page))
         (when (zero? (.length curpath))
           (do
+            (clojure.java.io/make-parents curpath)
             (if (not (.exists curpath))
               (with-open [newfile (java.io.FileWriter. curpath)]
                 (println (str "-> " curpath))
                 (if-let [text (gen-content lang page tree)]
-                  (.write newfile text)))
+                    (.write newfile text)))
                   (println (str "-- " curpath)))))))))
 
 (defn crawl-cat [lang]
