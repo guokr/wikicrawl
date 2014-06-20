@@ -8,7 +8,6 @@
   (try
     (let [pagename (lang (apply merge (:Names (yaml/parse-string
                                                 (slurp file)))))
-          ck (println "pn:" pagename)
           path (.getPath file)
           newname (str (.substring path 0 (inc (.lastIndexOf path ".")))
                        "txt")]

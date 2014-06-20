@@ -1,11 +1,12 @@
 (ns wikicrawl.util
   (:use wikicrawl.config)
+  (:import [java.net URLEncoder])
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [me.shenfeng.mustache :as mustache]
             [net.cgrand.enlive-html :as html]))
 
-(def counter (atom 0))
+(def counter (atom 1))
 
 (defn valid? [lang pagename]
   (every? nil? (map #(re-find % pagename) (lang blacklist))))
@@ -52,48 +53,52 @@
 (defn query-subcat [lang pagename]
   (map #(get % :title)
     (get-in
-      (parse-string (get
-          (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
-              "action=query&format=json&list=categorymembers&cmtype=subcat&"
-              "cmtitle=" pagename)) :body) true)
+      (parse-string (:body (client/get
+        (str "https://" (name lang) ".wikipedia.org/w/api.php?"
+             "action=query&format=json&list=categorymembers&cmtype=subcat&"
+             "cmtitle=" (URLEncoder/encode pagename)))) true)
       [:query :categorymembers])))
 
 (defn query-article [lang pagename]
   (map #(get % :title)
     (get-in
       (parse-string
-        (xml-unescape (:body
-          (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
-              "action=query&format=json&list=categorymembers&cmtype=page&cmnamespace=0&redirects&"
-              "cmtitle=" pagename)))) true)
+        (xml-unescape (:body (client/get
+          (str "https://" (name lang) ".wikipedia.org/w/api.php?"
+               "action=query&format=json&list=categorymembers&cmtype=page&cmnamespace=0&redirects&"
+               "cmtitle=" (URLEncoder/encode pagename))))) true)
       [:query :categorymembers])))
 
 (defn query-langlinks [lang pagename]
   (Thread/sleep 100)
   (:langlinks (first (vals
     (get-in
-        (parse-string
-          (xml-unescape (:body
-            (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
-              "action=query&format=json&prop=langlinks&"
-              "titles=" pagename)))) true)
+      (parse-string (xml-unescape (:body (client/get
+        (str "https://" (name lang) ".wikipedia.org/w/api.php?"
+             "action=query&format=json&prop=langlinks&"
+             "titles=" (URLEncoder/encode pagename))))) true)
         [:query :pages])))))
 
 (defn query-categories [lang pagename]
   (Thread/sleep 200)
-  (map #(get % :title)
-    (:categories (first (vals (get-in (parse-string
-       (xml-unescape (:body
-          (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?"
-              "action=query&format=json&prop=categories&clshow=!hidden&"
-              "titles=" pagename)))) true) [:query :pages]))))))
+  (map #(get % :title) (:categories (first (vals
+    (get-in (parse-string (xml-unescape (:body (client/get
+      (str "https://" (name lang) ".wikipedia.org/w/api.php?"
+           "action=query&format=json&prop=categories&clshow=!hidden&"
+           "titles=" (URLEncoder/encode pagename))))) true)
+      [:query :pages]))))))
 
 
 (defn query-page [lang pagename]
   (Thread/sleep 100)
   (first (vals
     (get-in
-      (parse-string (:body (client/get (str "https://" (name lang) ".wikipedia.org/w/api.php?action=parse&uselang=" (lang lang-variant) "&redirects&disablepp&prop=text&format=json&page=" pagename))))
+      (parse-string (:body (client/get
+        (str "https://" (name lang)
+             ".wikipedia.org/w/api.php?action=parse&uselang="
+             (lang lang-variant)
+             "&redirects&disablepp&prop=text&format=json&page="
+             (URLEncoder/encode pagename)))))
       ["parse" "text"]))))
 
 (defn mk-langlinks [lang page]
@@ -108,20 +113,25 @@
         (query-categories lang page)))))
 
 (defn gen-content [lang page tree]
-  (let [treepath (map #(hash-map :name %) tree)
-        langlinks (mk-langlinks lang page)
-        allcategories (map #(hash-map :lang (:lang %) :categories
+  (try
+    (let [treepath (map #(hash-map :name %) tree)
+          langlinks (mk-langlinks lang page)
+          allcategories (map #(hash-map :lang (:lang %) :categories
                                       (mk-categories (:lang %) (:name %)))
-                           langlinks)]
-    (tmpl-fn {:treepath treepath :names langlinks :allcategories allcategories})))
+                             langlinks)]
+      (tmpl-fn {:treepath treepath :names langlinks
+                :allcategories allcategories}))
+    (catch Throwable e (.printStackTrace e e) (Thread/sleep 10000))))
 
 (defn gen-page [lang pagename]
-  (-> (query-page lang pagename)
-      (clojure.string/replace #"\n" "")
-      java.io.StringReader.
-      html/html-resource
-      (html/at #{[:.metadata] [:.notice] [:.toc] [:.reflist] [:.printfooter]
-                 [:.noprint] [:.infobox] [:.navbox] [:.reference]
-                 [:.references] [:.mw-editsection]} (fn [x] nil))
-      html/texts
-      first))
+  (try
+    (-> (query-page lang pagename)
+        (clojure.string/replace #"\n" "")
+        java.io.StringReader.
+        html/html-resource
+        (html/at #{[:.metadata] [:.notice] [:.toc] [:.reflist] [:.printfooter]
+                   [:.noprint] [:.infobox] [:.navbox] [:.reference]
+                   [:.references] [:.mw-editsection]} (fn [x] nil))
+        html/texts
+        first)
+    (catch Throwable e (.printStackTrace e) (Thread/sleep 10000))))
