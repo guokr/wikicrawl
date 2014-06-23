@@ -6,5 +6,6 @@
 
 (defn -main []
     (crawl-cat :en)
-    (crawl-cat :zh))
+    ;(crawl-cat :zh)
+  )
 

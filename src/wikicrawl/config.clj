@@ -4,18 +4,19 @@
 
 (def root-path (java.io.File. "corpus"))
 
-(def langs [:en :de :es :fr :zh])
+;(def langs #(:en :de :es :fr :zh)
+(def langs #{:en :zh})
 
 (def category-ns-of {
   :en "Category"
-  :de "Kategorie"
-  :es "Categoría"
-  :fr "Catégorie"
+;  :de "Kategorie"
+;  :es "Categoría"
+;  :fr "Catégorie"
   :zh "Category"})
 
 (def blacklist {
   :en [#"^Template" #"partals?$"]
-  :zh [#"(模版|消歧義|消歧义|重定向)$"]})
+  :zh [#"(模版|模板|消歧義|消歧义|重定向)$"]})
 
 (def lang-variant {:zh "zh-cn" :en "en"})
 

@@ -70,7 +70,7 @@
       [:query :categorymembers])))
 
 (defn query-langlinks [lang pagename]
-  (Thread/sleep 100)
+  (Thread/sleep 300)
   (:langlinks (first (vals
     (get-in
       (parse-string (xml-unescape (:body (client/get
@@ -80,7 +80,7 @@
         [:query :pages])))))
 
 (defn query-categories [lang pagename]
-  (Thread/sleep 200)
+  (Thread/sleep 300)
   (map #(get % :title) (:categories (first (vals
     (get-in (parse-string (xml-unescape (:body (client/get
       (str "https://" (name lang) ".wikipedia.org/w/api.php?"
@@ -90,7 +90,7 @@
 
 
 (defn query-page [lang pagename]
-  (Thread/sleep 100)
+  (Thread/sleep 300)
   (first (vals
     (get-in
       (parse-string (:body (client/get
@@ -103,8 +103,9 @@
 
 (defn mk-langlinks [lang page]
   (sort-by #(:lang %)
+    (filter #(contains? langs (keyword (:lang %)))
            (into [{:lang (name lang) :name page}]
-                 (clojure.set/rename (query-langlinks lang page) {:* :name}))))
+                 (clojure.set/rename (query-langlinks lang page) {:* :name})))))
 
 (defn mk-categories [lang page]
   (sort-by last
@@ -121,7 +122,7 @@
                              langlinks)]
       (tmpl-fn {:treepath treepath :names langlinks
                 :allcategories allcategories}))
-    (catch Throwable e (.printStackTrace e e) (Thread/sleep 10000))))
+    (catch Throwable e (.printStackTrace e) (Thread/sleep 10000))))
 
 (defn gen-page [lang pagename]
   (try

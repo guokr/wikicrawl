@@ -3,7 +3,7 @@
         [wikicrawl.util]))
 
 (defn traverse-tree [lang page tree path depth progress]
-  (Thread/sleep (* (+ 400 (rand-int 200)) @counter))
+  (Thread/sleep (* (+ 400 (rand-int 300)) @counter))
   (let [filename (to-file-name lang page)
         curpath (java.io.File. path filename)
          newtree (conj tree (to-name page))]
