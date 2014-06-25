@@ -16,7 +16,7 @@
 
 (def blacklist {
   :en [#"^Template" #"partals?$"]
-  :zh [#"(模版|模板|消歧義|消歧义|重定向)$"]})
+  :zh [#"(模版|模板|消歧義|消歧义|重定向|维基资源)$"]})
 
 (def lang-variant {:zh "zh-cn" :en "en"})
 
@@ -27,11 +27,11 @@
          ;geography-and-places
          "Geography" "Places"
          ;health-and-fitness
-         "Self care" "Public health" "Health science"
+         "Self care" "Public health" "Health sciences"
          ;history-and-events
          "History" "Events"
          ;mathematics-and-logic
-         "Abstraction" "Mathematic"
+         "Abstraction" "Mathematics"
          ;natural-and-physical-sciences
          "Natural sciences" "Nature" "Science"
          ;people-and-self
@@ -45,7 +45,7 @@
          ;technology-and-applied-sciences
          "Applied sciences" "Technology"]
   :zh [  ;人文、艺术
-         "艺术" "人文"
+         "艺术" "人文学科"
          ;生活、文化
          "生活" "休閒" "娱乐" "体育" "媒体"
          ;地理、地方
