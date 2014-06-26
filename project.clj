@@ -9,6 +9,7 @@
                  [clj-yaml "0.4.0"]
                  [enlive "1.1.5"]
                  [me.shenfeng/mustache "1.1"]
-                 [cheshire "5.3.1"]]
+                 [cheshire "5.3.1"]
+                 [com.taoensso/carmine "2.6.0"]]
 
   :main wikicrawl.app)
