@@ -5,7 +5,8 @@
   (:gen-class))
 
 (defn -main []
-    (crawl-cat :en)
-    ;(crawl-cat :zh)
+    ;(start-crawl-cat :en)
+    ;(start-crawl-cat :zh)
+    (make-crawl-worker)
   )
 

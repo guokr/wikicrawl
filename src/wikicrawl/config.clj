@@ -45,7 +45,7 @@
          ;technology-and-applied-sciences
          "Applied sciences" "Technology"]
   :zh [  ;人文、艺术
-         "艺术" "人文学科"
+         "艺术" "人文學科"
          ;生活、文化
          "生活" "休閒" "娱乐" "体育" "媒体"
          ;地理、地方

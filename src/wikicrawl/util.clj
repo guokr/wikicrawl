@@ -55,7 +55,7 @@
     (get-in
       (parse-string (:body (client/get
         (str "https://" (name lang) ".wikipedia.org/w/api.php?"
-             "action=query&format=json&list=categorymembers&cmtype=subcat&"
+             "action=query&format=json&list=categorymembers&cmtype=subcat&redirects&"
              "cmtitle=" (URLEncoder/encode pagename)))) true)
       [:query :categorymembers])))
 
@@ -70,7 +70,7 @@
       [:query :categorymembers])))
 
 (defn query-langlinks [lang pagename]
-  (Thread/sleep 300)
+  ;(Thread/sleep 300)
   (:langlinks (first (vals
     (get-in
       (parse-string (xml-unescape (:body (client/get
@@ -80,7 +80,7 @@
         [:query :pages])))))
 
 (defn query-categories [lang pagename]
-  (Thread/sleep 300)
+  ;(Thread/sleep 300)
   (map #(get % :title) (:categories (first (vals
     (get-in (parse-string (xml-unescape (:body (client/get
       (str "https://" (name lang) ".wikipedia.org/w/api.php?"
@@ -114,15 +114,13 @@
         (query-categories lang page)))))
 
 (defn gen-content [lang page tree]
-  (try
-    (let [treepath (map #(hash-map :name %) tree)
-          langlinks (mk-langlinks lang page)
-          allcategories (map #(hash-map :lang (:lang %) :categories
-                                      (mk-categories (:lang %) (:name %)))
-                             langlinks)]
-      (tmpl-fn {:treepath treepath :names langlinks
-                :allcategories allcategories}))
-    (catch Throwable e (.printStackTrace e) (Thread/sleep 10000))))
+  (let [treepath (map #(hash-map :name %) tree)
+        langlinks (mk-langlinks lang page)
+        allcategories (map #(hash-map :lang (:lang %) :categories
+                                    (mk-categories (:lang %) (:name %)))
+                           langlinks)]
+    (tmpl-fn {:treepath treepath :names langlinks
+              :allcategories allcategories})))
 
 (defn gen-page [lang pagename]
   (try
