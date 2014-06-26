@@ -8,5 +8,7 @@
     ;(start-crawl-cat :en)
     ;(start-crawl-cat :zh)
     (make-crawl-worker)
+    ;(crawl-text :en)
+    ;(crawl-text :zh)
   )
 

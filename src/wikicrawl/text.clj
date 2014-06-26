@@ -28,4 +28,4 @@
 
 (defn crawl-text [lang]
   (let [lang-root-path (java.io.File. root-path (name lang))]
-    (crawl-dir lang root-path)))
+    (.start (Thread. (fn [] (crawl-dir lang lang-root-path))))))
