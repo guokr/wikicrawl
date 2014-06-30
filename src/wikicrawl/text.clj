@@ -13,6 +13,7 @@
       (if (nil? pagename) nil
         (if (zero? (.length (java.io.File. newname)))
           (with-open [newfile (java.io.FileWriter. newname)]
+            (Thread/sleep (* (+ 400 (rand-int 300)) @counter))
             (if-let [text (gen-page lang pagename)]
               (do
                 (println "->" newname)
@@ -23,9 +24,14 @@
   (doall (doseq [file (.listFiles dir)]
     (if (.isFile file)
       (if (.endsWith (.getName file) ".yaml")
-          (crawl-file lang file))
-      (crawl-dir lang file)))))
+        (do
+          (swap! counter inc)
+          (crawl-file lang file)
+          (swap! counter dec)))
+      (do
+        (Thread/sleep (* (+ 200 (rand-int 200)) @counter))
+        (.start (Thread. (fn [] (crawl-dir lang file)))))))))
 
 (defn crawl-text [lang]
   (let [lang-root-path (java.io.File. root-path (name lang))]
-    (.start (Thread. (fn [] (crawl-dir lang lang-root-path))))))
+    (crawl-dir lang lang-root-path)))

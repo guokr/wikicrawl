@@ -90,7 +90,7 @@
 
 
 (defn query-page [lang pagename]
-  (Thread/sleep 300)
+  ;(Thread/sleep 300)
   (first (vals
     (get-in
       (parse-string (:body (client/get
